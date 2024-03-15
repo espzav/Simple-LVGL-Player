@@ -91,6 +91,8 @@ static int decode_jpeg_video(void)
     if(err != ESP_OK)
         return -1;
     
+    assert(ret_size < player_ctx.out_buff_size);
+    
     return jpeg_image_size;
 }
 
@@ -277,30 +279,22 @@ static void show_video_task(void *arg)
 
     /* Get file size */
     ESP_GOTO_ON_FALSE(media_src_storage_get_size(&player_ctx.file, &player_ctx.filesize) == 0, ESP_ERR_NO_MEM, err, TAG, "Get file size failed");
-    ESP_LOGW(TAG,"1");
 
     /* Create input buffer */
     player_ctx.in_buff = (uint8_t *)jpeg_alloc_decoder_mem(player_ctx.in_buff_size);
     ESP_GOTO_ON_FALSE(player_ctx.in_buff, ESP_ERR_NO_MEM, err, TAG, "Allocation in_buff failed");
-    ESP_LOGW(TAG,"2");
 
     /* Init video decoder */
     ESP_GOTO_ON_ERROR(video_decoder_init(), err, TAG, "Initialize video decoder failed");
-    ESP_LOGW(TAG,"3");
     /* Get video output size */
     uint32_t height = 0;
     uint32_t width = 0;
     ESP_GOTO_ON_ERROR(get_video_size(&width, &height), err, TAG, "Get video file size failed");
-    ESP_LOGW(TAG,"4");
     
     /* Create output buffer */
-    player_ctx.out_buff_size = width * height * 2;
-    ESP_LOGW(TAG,"size: %ld", player_ctx.out_buff_size);
+    player_ctx.out_buff_size = width * height * 3;
     player_ctx.out_buff = (uint8_t *)jpeg_alloc_decoder_mem(player_ctx.out_buff_size);
-    ESP_LOGW(TAG,"5");
     ESP_GOTO_ON_FALSE(player_ctx.out_buff, ESP_ERR_NO_MEM, err, TAG, "Allocation out_buff failed");
-    
-    ESP_LOGW(TAG,"6");
     			 
     lvgl_port_lock(0);
 	/* Set buffer to LVGL canvas */ 
@@ -318,7 +312,6 @@ static void show_video_task(void *arg)
     lv_slider_set_range(player_ctx.slider, 0, 1000);
     lvgl_port_unlock();
 
-    ESP_LOGW(TAG,"7");
     player_ctx.state = PLAYER_STATE_PLAYING;
     
     ESP_LOGI(TAG, "Video player initialized");

@@ -10,7 +10,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/jpeg_decode.h"
-#include "hal/cache_hal.h"
 #include "esp_lvgl_port.h"
 #include "media_src_storage.h"
 #include "esp_lvgl_simple_player.h"
@@ -82,6 +81,8 @@ static int decode_jpeg_video(void)
     {
         jpeg_image_size = ((uint32_t)((match+2) - player_ctx.in_buff));  // move match by 2 for skip EOI
         jpeg_image_size_aligned = ALIGN_UP(jpeg_image_size, 16);
+        assert(jpeg_image_size < player_ctx.in_buff_size);
+        assert(jpeg_image_size_aligned < player_ctx.in_buff_size);
     }
     
     /* Decode JPEG */
@@ -279,7 +280,6 @@ static void show_video_task(void *arg)
     ESP_LOGW(TAG,"1");
 
     /* Create input buffer */
-    player_ctx.in_buff_size = ALIGN_UP(player_ctx.in_buff_size, cache_hal_get_cache_line_size(CACHE_LL_LEVEL_EXT_MEM, CACHE_TYPE_DATA));
     player_ctx.in_buff = (uint8_t *)jpeg_alloc_decoder_mem(player_ctx.in_buff_size);
     ESP_GOTO_ON_FALSE(player_ctx.in_buff, ESP_ERR_NO_MEM, err, TAG, "Allocation in_buff failed");
     ESP_LOGW(TAG,"2");
@@ -294,7 +294,7 @@ static void show_video_task(void *arg)
     ESP_LOGW(TAG,"4");
     
     /* Create output buffer */
-    player_ctx.out_buff_size = ALIGN_UP(width * height * 2, cache_hal_get_cache_line_size(CACHE_LL_LEVEL_EXT_MEM, CACHE_TYPE_DATA));
+    player_ctx.out_buff_size = width * height * 2;
     ESP_LOGW(TAG,"size: %ld", player_ctx.out_buff_size);
     player_ctx.out_buff = (uint8_t *)jpeg_alloc_decoder_mem(player_ctx.out_buff_size);
     ESP_LOGW(TAG,"5");

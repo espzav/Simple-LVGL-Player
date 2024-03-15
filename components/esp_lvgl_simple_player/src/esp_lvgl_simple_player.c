@@ -68,33 +68,6 @@ static const jpeg_decode_cfg_t jpeg_decode_cfg = {
 };
 
 
-static int decode_jpeg_video(void)
-{
-    esp_err_t err;
-    uint32_t ret_size = 0;
-    uint32_t jpeg_image_size = 0;
-    uint32_t jpeg_image_size_aligned = 0;
-    
-    /* Search for EOI. */
-    uint8_t * match = memmem(player_ctx.in_buff, player_ctx.in_buff_size, &EOI, 2); 
-    if(match)
-    {
-        jpeg_image_size = ((uint32_t)((match+2) - player_ctx.in_buff));  // move match by 2 for skip EOI
-        jpeg_image_size_aligned = ALIGN_UP(jpeg_image_size, 16);
-        assert(jpeg_image_size < player_ctx.in_buff_size);
-        assert(jpeg_image_size_aligned < player_ctx.in_buff_size);
-    }
-    
-    /* Decode JPEG */
-    ret_size = player_ctx.out_buff_size;
-    err = jpeg_decoder_process(player_ctx.jpeg, &jpeg_decode_cfg, player_ctx.in_buff, jpeg_image_size_aligned, player_ctx.out_buff, &ret_size);
-    if(err != ESP_OK)
-        return -1;
-    
-    assert(ret_size < player_ctx.out_buff_size);
-    
-    return jpeg_image_size;
-}
 
 static void play_event_cb(lv_event_t *e)
 {
@@ -265,6 +238,39 @@ static void video_decoder_deinit(void)
     }
 }
 
+static uint8_t * video_decoder_malloc(uint32_t size)
+{
+    return (uint8_t *)jpeg_alloc_decoder_mem(size);
+}
+
+static int video_decoder_decode(void)
+{
+    esp_err_t err;
+    uint32_t ret_size = 0;
+    uint32_t jpeg_image_size = 0;
+    uint32_t jpeg_image_size_aligned = 0;
+    
+    /* Search for EOI. */
+    uint8_t * match = memmem(player_ctx.in_buff, player_ctx.in_buff_size, &EOI, 2); 
+    if(match)
+    {
+        jpeg_image_size = ((uint32_t)((match+2) - player_ctx.in_buff));  // move match by 2 for skip EOI
+        jpeg_image_size_aligned = ALIGN_UP(jpeg_image_size, 16);
+        assert(jpeg_image_size < player_ctx.in_buff_size);
+        assert(jpeg_image_size_aligned < player_ctx.in_buff_size);
+    }
+    
+    /* Decode JPEG */
+    ret_size = player_ctx.out_buff_size;
+    err = jpeg_decoder_process(player_ctx.jpeg, &jpeg_decode_cfg, player_ctx.in_buff, jpeg_image_size_aligned, player_ctx.out_buff, &ret_size);
+    if(err != ESP_OK)
+        return -1;
+    
+    assert(ret_size < player_ctx.out_buff_size);
+    
+    return jpeg_image_size;
+}
+
 static void show_video_task(void *arg)
 {
     esp_err_t ret = ESP_OK;
@@ -281,7 +287,7 @@ static void show_video_task(void *arg)
     ESP_GOTO_ON_FALSE(media_src_storage_get_size(&player_ctx.file, &player_ctx.filesize) == 0, ESP_ERR_NO_MEM, err, TAG, "Get file size failed");
 
     /* Create input buffer */
-    player_ctx.in_buff = (uint8_t *)jpeg_alloc_decoder_mem(player_ctx.in_buff_size);
+    player_ctx.in_buff = video_decoder_malloc(player_ctx.in_buff_size);
     ESP_GOTO_ON_FALSE(player_ctx.in_buff, ESP_ERR_NO_MEM, err, TAG, "Allocation in_buff failed");
 
     /* Init video decoder */
@@ -291,9 +297,11 @@ static void show_video_task(void *arg)
     uint32_t width = 0;
     ESP_GOTO_ON_ERROR(get_video_size(&width, &height), err, TAG, "Get video file size failed");
     
+    ESP_LOGI(TAG, "Video size: %ld x %ld", width, height);
+    
     /* Create output buffer */
     player_ctx.out_buff_size = width * height * 3;
-    player_ctx.out_buff = (uint8_t *)jpeg_alloc_decoder_mem(player_ctx.out_buff_size);
+    player_ctx.out_buff = video_decoder_malloc(player_ctx.out_buff_size);
     ESP_GOTO_ON_FALSE(player_ctx.out_buff, ESP_ERR_NO_MEM, err, TAG, "Allocation out_buff failed");
     			 
     lvgl_port_lock(0);
@@ -342,7 +350,7 @@ static void show_video_task(void *arg)
         }
         
         /* Decode one frame */
-        processed = decode_jpeg_video();
+        processed = video_decoder_decode();
         
         /* Move in video file */
         if(processed > 0)

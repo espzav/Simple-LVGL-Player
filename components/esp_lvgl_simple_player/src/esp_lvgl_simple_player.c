@@ -34,6 +34,10 @@ typedef struct
     player_state_t  state;
     bool            loop;
     bool            hide_controls;
+    bool            hide_slider;
+    bool            hide_status;
+    bool            auto_width;
+    bool            auto_height;
     
     /* Buffers */
     uint8_t     *in_buff;
@@ -42,6 +46,7 @@ typedef struct
     uint32_t    out_buff_size;
     
     /* LVGL objects */
+    lv_obj_t    *main;
     lv_obj_t    *canvas;
     lv_obj_t    *slider;
     lv_obj_t    *btn_play;
@@ -115,6 +120,7 @@ static lv_obj_t * create_lvgl_objects(lv_obj_t * screen)
     lv_obj_set_style_pad_all(cont_col, 0, 0);
     lv_obj_set_flex_align(cont_col, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_style_bg_color(cont_col, lv_color_black(), 0);
+    player_ctx.main = cont_col;
     
     /* Video canvas */
     player_ctx.canvas = lv_canvas_create(cont_col);
@@ -184,9 +190,18 @@ static lv_obj_t * create_lvgl_objects(lv_obj_t * screen)
     lv_obj_add_flag(img_stop, LV_OBJ_FLAG_HIDDEN);
     player_ctx.img_stop = img_stop;
     
+    /* Hide control buttons */
     if (player_ctx.hide_controls) {
-        lv_obj_add_flag(slider, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(cont_row, LV_OBJ_FLAG_HIDDEN);
+    }
+    /* Hide slider */
+    if (player_ctx.hide_slider) {
+        lv_obj_add_flag(slider, LV_OBJ_FLAG_HIDDEN);
+    }
+    /* Hide status icons */
+    if (player_ctx.hide_status) {
+        lv_obj_add_flag(img_pause, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(img_stop, LV_OBJ_FLAG_HIDDEN);
     }
         
     lvgl_port_unlock();
@@ -299,6 +314,14 @@ static void show_video_task(void *arg)
 	/* Set buffer to LVGL canvas */ 
     lv_canvas_set_buffer(player_ctx.canvas, player_ctx.out_buff, width, height, LV_COLOR_FORMAT_RGB565);
     lv_obj_invalidate(player_ctx.canvas);
+    
+    if (player_ctx.auto_width || player_ctx.auto_height) {
+        uint32_t h = (player_ctx.auto_height ? (height+120) : lv_obj_get_height(player_ctx.main));
+        uint32_t w = (player_ctx.auto_width ? width : lv_obj_get_width(player_ctx.main));
+        lv_obj_set_size(player_ctx.main, w, h);
+    }
+    
+    
     lv_obj_remove_state(player_ctx.slider, LV_STATE_DISABLED);
     /* Enable/disable buttons */
     lv_obj_add_state(player_ctx.btn_play, LV_STATE_DISABLED);
@@ -401,6 +424,10 @@ lv_obj_t * esp_lvgl_simple_player_create(esp_lvgl_simple_player_cfg_t * params)
     player_ctx.screen_width = params->screen_width;
     player_ctx.screen_height = params->screen_height;
     player_ctx.hide_controls = params->flags.hide_controls;
+    player_ctx.hide_slider = params->flags.hide_slider;
+    player_ctx.hide_status = params->flags.hide_status;
+    player_ctx.auto_width = params->flags.auto_width;
+    player_ctx.auto_height = params->flags.auto_height;
     
     /* Create LVGL objects */
     lv_obj_t * player_screen = create_lvgl_objects(params->screen);
@@ -419,8 +446,7 @@ player_state_t esp_lvgl_simple_player_get_state(void)
 void esp_lvgl_simple_player_change_file(char *file)
 {
     if (player_ctx.state != PLAYER_STATE_STOPPED) {
-        ESP_LOGE(TAG, "Playing file can be changed only when video is stopped.");
-        return;
+        ESP_LOGW(TAG, "Playing file can be changed only when video is stopped.");
     }
     player_ctx.file_path = file;
 }

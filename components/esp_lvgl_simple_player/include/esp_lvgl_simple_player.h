@@ -31,8 +31,12 @@ typedef struct {
     uint32_t    screen_width;   /* Width of the video player object */    
     uint32_t    screen_height;  /* Height of the video player object */
     struct {
-        unsigned int hide_controls: 1;  /* Hide control buttons and slider */ 
+        unsigned int hide_controls: 1;  /* Hide control buttons */ 
+        unsigned int hide_slider: 1;  /* Hide indication slider */ 
         unsigned int hide_status: 1;  /* Hide status icons in video (paused, stopped) */ 
+                
+        unsigned int auto_width: 1;  /* Set automatic width by video size */ 
+        unsigned int auto_height: 1;  /* Set automatic height by video size */ 
     } flags;
 } esp_lvgl_simple_player_cfg_t;
 

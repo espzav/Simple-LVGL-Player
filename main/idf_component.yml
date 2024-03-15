@@ -1,0 +1,4 @@
+description: BSP Display Cinema example
+
+dependencies:
+  esp32_p4_function_ev_board: "*"

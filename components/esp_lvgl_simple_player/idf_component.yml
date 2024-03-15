@@ -1,0 +1,10 @@
+version: "1.0.0"
+description: ESP LVGL Simple Player
+
+dependencies:
+  idf: ">=5"
+  lvgl/lvgl: "^9"
+  esp_lvgl_port:
+    version: "^2"
+    public: true
+

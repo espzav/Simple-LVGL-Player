@@ -296,6 +296,7 @@ static void show_video_task(void *arg)
     uint32_t height = 0;
     uint32_t width = 0;
     ESP_GOTO_ON_ERROR(get_video_size(&width, &height), err, TAG, "Get video file size failed");
+    width = ALIGN_UP(width, 16);
     
     ESP_LOGI(TAG, "Video size: %ld x %ld", width, height);
     

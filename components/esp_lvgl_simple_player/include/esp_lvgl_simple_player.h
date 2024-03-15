@@ -12,6 +12,16 @@ extern "C" {
 #endif
 
 /**
+ * @brief Player states
+ */
+typedef enum
+{
+    PLAYER_STATE_PLAYING,
+    PLAYER_STATE_PAUSED,
+    PLAYER_STATE_STOPPED,
+} player_state_t;
+
+/**
  * @brief Player configuration structure
  */
 typedef struct {
@@ -22,6 +32,7 @@ typedef struct {
     uint32_t    screen_height;  /* Height of the video player object */
     struct {
         unsigned int hide_controls: 1;  /* Hide control buttons and slider */ 
+        unsigned int hide_status: 1;  /* Hide status icons in video (paused, stopped) */ 
     } flags;
 } esp_lvgl_simple_player_cfg_t;
 
@@ -33,12 +44,17 @@ typedef struct {
  * @return 
  *      - ESP_OK                 On success
  */
-esp_err_t esp_lvgl_simple_player_create(esp_lvgl_simple_player_cfg_t * params);
+lv_obj_t * esp_lvgl_simple_player_create(esp_lvgl_simple_player_cfg_t * params);
+
+/**
+ * @brief Get player state
+ */
+player_state_t esp_lvgl_simple_player_get_state(void);
 
 /**
  * @brief Change file for playing
  */
-void esp_lvgl_simple_player_change_file(const char *file);
+void esp_lvgl_simple_player_change_file(char *file);
 
 /**
  * @brief Play player

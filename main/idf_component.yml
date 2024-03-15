@@ -1,4 +1,5 @@
 description: BSP Display Cinema example
 
 dependencies:
+  usb_host_hid: "*"
   esp32_p4_function_ev_board: "*"

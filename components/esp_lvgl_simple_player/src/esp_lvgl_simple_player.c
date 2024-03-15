@@ -19,13 +19,6 @@
 static const char *TAG = "PLAYER";
 static const uint16_t EOI = 0xd9ff; /* End of image */
 
-typedef enum
-{
-    PLAYER_STATE_PLAYING,
-    PLAYER_STATE_PAUSED,
-    PLAYER_STATE_STOPPED,
-} player_state_t;
-
 typedef struct
 {
     char                    *file_path;
@@ -129,12 +122,9 @@ static lv_obj_t * create_lvgl_objects(lv_obj_t * screen)
     
     /*Create a slider in the center of the display*/
     lv_obj_t * slider = lv_slider_create(cont_col);
-    lv_obj_set_size(slider, player_ctx.screen_width, 20);
+    lv_obj_set_size(slider, player_ctx.screen_width, 5);
     lv_obj_add_state(slider, LV_STATE_DISABLED);
-    /*Create a label next to the slider*/
-    lv_obj_t * slider_label = lv_label_create(slider);
-    lv_label_set_text(slider_label, "0%");
-    lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_RIGHT_MID, 0, 0);
+    lv_obj_set_style_opa(slider, LV_OPA_TRANSP, LV_PART_KNOB);
     player_ctx.slider = slider;
     
     /* Buttons */
@@ -226,7 +216,7 @@ static esp_err_t video_decoder_init(void)
 {
     jpeg_decode_engine_cfg_t engine_cfg = {
         .intr_priority = 0,
-        .timeout_ms = 10,
+        .timeout_ms = 50,
     };
     return jpeg_new_decoder_engine(&engine_cfg, &player_ctx.jpeg);
 }
@@ -399,12 +389,12 @@ err:
     vTaskDelete( NULL );
 }
 
-esp_err_t esp_lvgl_simple_player_create(esp_lvgl_simple_player_cfg_t * params)
+lv_obj_t * esp_lvgl_simple_player_create(esp_lvgl_simple_player_cfg_t * params)
 {    
-    ESP_RETURN_ON_FALSE(params->file, ESP_ERR_INVALID_ARG, TAG, "File path must be filled");
-    ESP_RETURN_ON_FALSE(params->screen, ESP_ERR_INVALID_ARG, TAG, "LVGL screen must be filled");
-    ESP_RETURN_ON_FALSE(params->buff_size, ESP_ERR_INVALID_ARG, TAG, "Size of the video frame buffer must be filled");
-    ESP_RETURN_ON_FALSE(params->screen_width > 0 && params->screen_height > 0, ESP_ERR_INVALID_ARG, TAG, "Object size must be filled");
+    ESP_RETURN_ON_FALSE(params->file, NULL, TAG, "File path must be filled");
+    ESP_RETURN_ON_FALSE(params->screen, NULL, TAG, "LVGL screen must be filled");
+    ESP_RETURN_ON_FALSE(params->buff_size, NULL, TAG, "Size of the video frame buffer must be filled");
+    ESP_RETURN_ON_FALSE(params->screen_width > 0 && params->screen_height > 0, NULL, TAG, "Object size must be filled");
     
     player_ctx.file_path = params->file;
     player_ctx.in_buff_size = params->buff_size;
@@ -418,12 +408,21 @@ esp_err_t esp_lvgl_simple_player_create(esp_lvgl_simple_player_cfg_t * params)
     /* Default player state */
     esp_lvgl_simple_player_stop();
     
-    return ESP_OK;
+    return player_screen;
 }
 
-void esp_lvgl_simple_player_change_file(const char *file)
+player_state_t esp_lvgl_simple_player_get_state(void)
 {
-    //TODO;
+    return player_ctx.state;
+}
+
+void esp_lvgl_simple_player_change_file(char *file)
+{
+    if (player_ctx.state != PLAYER_STATE_STOPPED) {
+        ESP_LOGE(TAG, "Playing file can be changed only when video is stopped.");
+        return;
+    }
+    player_ctx.file_path = file;
 }
 
 void esp_lvgl_simple_player_play(void)

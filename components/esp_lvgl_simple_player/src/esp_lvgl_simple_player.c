@@ -55,6 +55,7 @@ typedef struct
     lv_obj_t    *btn_repeat;
     lv_obj_t    *img_pause;
     lv_obj_t    *img_stop;
+    lv_obj_t    *controls;
 } player_ctx_t;
 
 static player_ctx_t player_ctx;
@@ -142,6 +143,7 @@ static lv_obj_t * create_lvgl_objects(lv_obj_t * screen)
     lv_obj_set_flex_align(cont_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_style_bg_color(cont_row, lv_color_black(), 0);
     lv_obj_set_style_border_width(cont_row, 0, 0);
+    player_ctx.controls = cont_row;
     
     /* Play button */
     lv_obj_t * play_btn = lv_btn_create(cont_row);
@@ -386,6 +388,9 @@ err:
     lvgl_port_lock(0);
     /* Show black on screen */
     memset(player_ctx.out_buff, 0, player_ctx.out_buff_size);
+    if (player_ctx.auto_height) {
+        lv_obj_set_height(player_ctx.main, 320);
+    }
     lv_obj_invalidate(player_ctx.canvas);
     /* Set slider */
     lv_slider_set_value(player_ctx.slider, 0, LV_ANIM_ON);
@@ -441,6 +446,15 @@ lv_obj_t * esp_lvgl_simple_player_create(esp_lvgl_simple_player_cfg_t * params)
 player_state_t esp_lvgl_simple_player_get_state(void)
 {
     return player_ctx.state;
+}
+
+void esp_lvgl_simple_player_hide_controls(bool hide)
+{
+    if (hide) {
+        lv_obj_add_flag(player_ctx.controls, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_remove_flag(player_ctx.controls, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 void esp_lvgl_simple_player_change_file(char *file)

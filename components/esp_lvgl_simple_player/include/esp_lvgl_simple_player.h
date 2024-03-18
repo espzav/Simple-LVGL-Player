@@ -56,6 +56,11 @@ lv_obj_t * esp_lvgl_simple_player_create(esp_lvgl_simple_player_cfg_t * params);
 player_state_t esp_lvgl_simple_player_get_state(void);
 
 /**
+ * @brief Hide player controls
+ */
+void esp_lvgl_simple_player_hide_controls(bool hide);
+
+/**
  * @brief Change file for playing
  */
 void esp_lvgl_simple_player_change_file(char *file);

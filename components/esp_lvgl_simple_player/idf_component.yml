@@ -1,6 +1,9 @@
 version: "1.0.0"
 description: ESP LVGL Simple Player
 
+targets:
+  - esp32p4
+
 dependencies:
   idf: ">=5"
   lvgl/lvgl: "^9"

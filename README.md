@@ -1,7 +1,11 @@
 # Simple LVGL Player
 
-This is a display + LVGL graphics library example.
+This is a display + LVGL9 graphics library example.
 Play mjpeg wideo from SD card.
+
+## Usage
+
+Save `*.mjpeg` video files into `root` on SD card. You can select video file and play it.
 
 ## Create M-JPEG video
 

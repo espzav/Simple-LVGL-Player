@@ -11,17 +11,19 @@
 #include "esp_lvgl_simple_player.h"
 
 static const char *TAG = "APP";
-#define APP_SUPPORT_USB_MOUSE   (1)
-#define APP_SUPPORT_FILE_EXT    ".mjpeg"
+#define APP_SUPPORT_USB_MOUSE    (1)
+#define APP_SUPPORT_USB_KEYBOARD (1)
+#define APP_SUPPORT_FILE_EXT     ".mjpeg"
 
 // LVGL image declare
 LV_IMG_DECLARE(breaking_news)
 
 #define APP_VIDEO_FILE "01_P4_vertical_540x960.mjpeg"
 #define APP_VIDEO_FILE_PATH BSP_SD_MOUNT_POINT"/"APP_VIDEO_FILE
-#define APP_BREAKING_NEWS_TEXT  "BREAKING NEWS: Very long text... Something about P4, BSP, LVGL9 and more.... Rolling text... Something else..."
+#define APP_BREAKING_NEWS_TEXT  "Very long text... Something about P4, BSP, LVGL9 and more.... *** Demo can be downloaded here: https://github.com/espzav/Simple-LVGL-Player ***"
 
 static char file_path[50] = "";
+static char breaking_news_text[500] = {APP_BREAKING_NEWS_TEXT};
 static lv_obj_t * img_breaking_news;
 static int sel_file = 0;
 
@@ -152,18 +154,17 @@ static void app_show_ui(void)
     };
     esp_lvgl_simple_player_create(&player_cfg);
     
-    // Create image
+    /* Breaking news image */
     img_breaking_news = lv_img_create(lv_screen_active());
     lv_img_set_src(img_breaking_news, &breaking_news);
     lv_obj_align(img_breaking_news, LV_ALIGN_BOTTOM_MID, 0, 0);
     
     lv_obj_t * label = lv_label_create(img_breaking_news);
     lv_obj_set_width(label, BSP_LCD_V_RES - 155);
-    lv_label_set_text_static(label, APP_BREAKING_NEWS_TEXT);
+    lv_label_set_text(label, breaking_news_text);
     lv_obj_set_style_text_font(label, &lv_font_montserrat_16, 0);
     lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_align(label, LV_ALIGN_BOTTOM_RIGHT, -40, -25);
-    //lv_obj_set_style_text_color(label, lv_color_white(), 0);
     
     /* Start playing */
     esp_lvgl_simple_player_play();
@@ -192,15 +193,27 @@ void app_main(void)
     lv_disp_t *display = bsp_display_start_with_config(&disp_cfg);
     bsp_display_backlight_on();
 
-#if APP_SUPPORT_USB_MOUSE
+#if (APP_SUPPORT_USB_MOUSE || APP_SUPPORT_USB_KEYBOARD)
     /* Initialize USB */
     bsp_usb_host_start(BSP_USB_HOST_POWER_MODE_USB_DEV, true);
+#endif
+
+#if APP_SUPPORT_USB_MOUSE
     /* Initialize mouse */
     const lvgl_port_hid_mouse_cfg_t mouse_cfg = {
         .disp = display,
         .sensitivity = 1,
     };
     lvgl_port_add_usb_hid_mouse_input(&mouse_cfg);
+#endif
+
+
+#if APP_SUPPORT_USB_KEYBOARD
+    /* Initialize keyboard */
+    const lvgl_port_hid_keyboard_cfg_t kb_cfg = {
+        .disp = display,
+    };
+    lvgl_port_add_usb_hid_keyboard_input(&kb_cfg);
 #endif
 
     app_show_ui();

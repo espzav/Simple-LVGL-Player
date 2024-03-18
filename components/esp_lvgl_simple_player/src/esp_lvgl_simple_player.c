@@ -121,6 +121,7 @@ static lv_obj_t * create_lvgl_objects(lv_obj_t * screen)
     lv_obj_set_style_pad_all(cont_col, 0, 0);
     lv_obj_set_flex_align(cont_col, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_style_bg_color(cont_col, lv_color_black(), 0);
+    lv_obj_remove_flag(cont_col, LV_OBJ_FLAG_SCROLLABLE);
     player_ctx.main = cont_col;
     
     /* Video canvas */

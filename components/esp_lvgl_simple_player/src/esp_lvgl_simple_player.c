@@ -246,9 +246,15 @@ static void video_decoder_deinit(void)
     }
 }
 
-static uint8_t * video_decoder_malloc(uint32_t size)
+static uint8_t * video_decoder_malloc(uint32_t size, bool inbuff, uint32_t * outsize)
 {
-    return (uint8_t *)jpeg_alloc_decoder_mem(size);
+    const jpeg_decode_memory_alloc_cfg_t tx_mem_cfg = {
+        .buffer_direction = JPEG_DEC_ALLOC_INPUT_BUFFER,
+    };
+    const jpeg_decode_memory_alloc_cfg_t rx_mem_cfg = {
+        .buffer_direction = JPEG_DEC_ALLOC_OUTPUT_BUFFER,
+    };
+    return (uint8_t *)jpeg_alloc_decoder_mem(size, (inbuff ? &tx_mem_cfg : &rx_mem_cfg), outsize);
 }
 
 static int video_decoder_decode(void)
@@ -270,7 +276,7 @@ static int video_decoder_decode(void)
     
     /* Decode JPEG */
     ret_size = player_ctx.out_buff_size;
-    err = jpeg_decoder_process(player_ctx.jpeg, &jpeg_decode_cfg, player_ctx.in_buff, jpeg_image_size_aligned, player_ctx.out_buff, &ret_size);
+    err = jpeg_decoder_process(player_ctx.jpeg, &jpeg_decode_cfg, player_ctx.in_buff, jpeg_image_size_aligned, player_ctx.out_buff, player_ctx.out_buff_size, &ret_size);
     if(err != ESP_OK)
         return -1;
     
@@ -295,7 +301,7 @@ static void show_video_task(void *arg)
     ESP_GOTO_ON_FALSE(media_src_storage_get_size(&player_ctx.file, &player_ctx.filesize) == 0, ESP_ERR_NO_MEM, err, TAG, "Get file size failed");
 
     /* Create input buffer */
-    player_ctx.in_buff = video_decoder_malloc(player_ctx.in_buff_size);
+    player_ctx.in_buff = video_decoder_malloc(player_ctx.in_buff_size, true, &player_ctx.in_buff_size);
     ESP_GOTO_ON_FALSE(player_ctx.in_buff, ESP_ERR_NO_MEM, err, TAG, "Allocation in_buff failed");
 
     /* Init video decoder */
@@ -310,7 +316,7 @@ static void show_video_task(void *arg)
     
     /* Create output buffer */
     player_ctx.out_buff_size = width * height * 3;
-    player_ctx.out_buff = video_decoder_malloc(player_ctx.out_buff_size);
+    player_ctx.out_buff = video_decoder_malloc(player_ctx.out_buff_size, false, &player_ctx.out_buff_size);
     ESP_GOTO_ON_FALSE(player_ctx.out_buff, ESP_ERR_NO_MEM, err, TAG, "Allocation out_buff failed");
     			 
     lvgl_port_lock(0);

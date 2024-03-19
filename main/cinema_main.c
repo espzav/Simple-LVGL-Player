@@ -20,7 +20,7 @@ LV_IMG_DECLARE(breaking_news)
 
 #define APP_VIDEO_FILE "01_P4_vertical_540x960.mjpeg"
 #define APP_VIDEO_FILE_PATH BSP_SD_MOUNT_POINT"/"APP_VIDEO_FILE
-#define APP_BREAKING_NEWS_TEXT  "Very long text... Something about P4, BSP, LVGL9 and more.... *** Demo can be downloaded here: https://github.com/espzav/Simple-LVGL-Player ***"
+#define APP_BREAKING_NEWS_TEXT  "New ESP32P4 chip is here! This demo was made with ESP-BSP and LVGL port (with LVGL9). *** Demo can be downloaded here: https://github.com/espzav/Simple-LVGL-Player ***"
 
 static char file_path[50] = "";
 static char breaking_news_text[500] = {APP_BREAKING_NEWS_TEXT};

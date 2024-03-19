@@ -248,13 +248,13 @@ static void video_decoder_deinit(void)
 
 static uint8_t * video_decoder_malloc(uint32_t size, bool inbuff, uint32_t * outsize)
 {
-    const jpeg_decode_memory_alloc_cfg_t tx_mem_cfg = {
+    jpeg_decode_memory_alloc_cfg_t tx_mem_cfg = {
         .buffer_direction = JPEG_DEC_ALLOC_INPUT_BUFFER,
     };
-    const jpeg_decode_memory_alloc_cfg_t rx_mem_cfg = {
+    jpeg_decode_memory_alloc_cfg_t rx_mem_cfg = {
         .buffer_direction = JPEG_DEC_ALLOC_OUTPUT_BUFFER,
     };
-    return (uint8_t *)jpeg_alloc_decoder_mem(size, (inbuff ? &tx_mem_cfg : &rx_mem_cfg), outsize);
+    return (uint8_t *)jpeg_alloc_decoder_mem(size, (inbuff ? &tx_mem_cfg : &rx_mem_cfg), (size_t*)outsize);
 }
 
 static int video_decoder_decode(void)

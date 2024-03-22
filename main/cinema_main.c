@@ -23,16 +23,18 @@ LV_IMG_DECLARE(breaking_news)
 #define APP_BREAKING_NEWS_TEXT  "New ESP32P4 chip is here! This demo was made with ESP-BSP and LVGL port (with LVGL9). *** Demo can be downloaded here: https://github.com/espzav/Simple-LVGL-Player ***"
 
 static char file_path[50] = "";
-static char breaking_news_text[500] = {APP_BREAKING_NEWS_TEXT};
 static lv_obj_t * img_breaking_news;
+static lv_obj_t * row_edit;
+static lv_obj_t * lbl_breaking_news;
 static int sel_file = 0;
 
-static void app_get_video_files(char * buff, uint32_t size)
+static char * app_get_video_files(char * buff, uint32_t size)
 {
     int i = 0;
     uint32_t len = 0;
     struct dirent *dir;
     DIR *d;
+    char * file = NULL;
 
     /* Open directory */
     d = opendir(BSP_SD_MOUNT_POINT);
@@ -41,6 +43,7 @@ static void app_get_video_files(char * buff, uint32_t size)
         while ((dir = readdir(d)) != NULL) {
             if (dir->d_type != DT_DIR) {
                 if (strstr(dir->d_name, APP_SUPPORT_FILE_EXT) != NULL) {
+                    file = buff+len;
                     len += snprintf(buff+len, size-len, "%s\n", dir->d_name);
                     if (strcmp(dir->d_name, APP_VIDEO_FILE) == 0) {
                         sel_file = i;
@@ -49,9 +52,14 @@ static void app_get_video_files(char * buff, uint32_t size)
             }
             i++;
         }
+        /* Remove last new line */
+        buff[len-1] = 0;
 
         closedir(d);
     }
+    
+    /* Return last filename */
+    return file;
 }
 
 static void file_changed(lv_event_t * e)
@@ -92,6 +100,28 @@ static void hide_controls_changed(lv_event_t * e)
     }
 }
 
+static void edit_event_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if(code == LV_EVENT_CLICKED) {
+        if (lv_obj_has_flag(row_edit, LV_OBJ_FLAG_HIDDEN)) {
+            lv_obj_remove_flag(row_edit, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_add_flag(row_edit, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+}
+
+static void save_event_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_user_data(e);
+    if(code == LV_EVENT_CLICKED && ta) {
+        const char * txt = lv_textarea_get_text(ta);
+        lv_label_set_text(lbl_breaking_news, txt);
+    }
+}
+
 static void app_show_ui(void)
 {
     /* Create LVGL objects */
@@ -109,7 +139,8 @@ static void app_show_ui(void)
     lv_obj_set_style_border_width(cont_col, 0, 0);
    
     char files[300] = "";
-    app_get_video_files(files, sizeof(files));
+    char * filename;
+    filename = app_get_video_files(files, sizeof(files));
     
     lv_obj_t *cont_row = lv_obj_create(cont_col);
     lv_obj_set_size(cont_row, BSP_LCD_V_RES - 20, 80);
@@ -128,22 +159,52 @@ static void app_show_ui(void)
     lv_dropdown_set_selected(dd, sel_file);
     lv_obj_set_style_pad_top(dd, 5, 0);
     
-    /* Checkbox - breaking news */
+    /* Checkbox - hide controls */
     lv_obj_t * cb = lv_checkbox_create(cont_row);
+    lv_checkbox_set_text(cb, "HIDE CONTROLS");
+    lv_obj_set_style_text_color(cb, lv_color_white(), 0);
+    lv_obj_add_event_cb(cb, hide_controls_changed, LV_EVENT_VALUE_CHANGED, NULL);
+    
+    /* Checkbox - breaking news */
+    cb = lv_checkbox_create(cont_row);
     lv_checkbox_set_text(cb, "BREAKING NEWS");
     lv_obj_add_state(cb, LV_STATE_CHECKED);
     lv_obj_set_style_text_color(cb, lv_color_white(), 0);
     lv_obj_add_event_cb(cb, breaking_news_changed, LV_EVENT_VALUE_CHANGED, NULL);
+
+    /* Edit button */
+    lv_obj_t * btn_edit = lv_btn_create(cont_row);
+    lv_obj_t * label = lv_label_create(btn_edit);
+    lv_label_set_text_static(label, LV_SYMBOL_EDIT);
+    lv_obj_add_event_cb(btn_edit, edit_event_cb, LV_EVENT_CLICKED, NULL);
+
+    /* Edit ROW */
+    row_edit = lv_obj_create(cont_col);
+    lv_obj_set_size(row_edit, BSP_LCD_V_RES - 20, 80);
+    lv_obj_set_flex_flow(row_edit, LV_FLEX_FLOW_ROW);
+    lv_obj_set_style_pad_top(row_edit, 0, 0);
+    lv_obj_set_style_pad_bottom(row_edit, 0, 0);
+    lv_obj_set_flex_align(row_edit, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(row_edit, lv_color_black(), 0);
+    lv_obj_set_style_border_width(row_edit, 0, 0);
+    lv_obj_add_flag(row_edit, LV_OBJ_FLAG_HIDDEN);
     
-    /* Checkbox - hide controls */
-    cb = lv_checkbox_create(cont_row);
-    lv_checkbox_set_text(cb, "HIDE CONTROLS");
-    lv_obj_set_style_text_color(cb, lv_color_white(), 0);
-    lv_obj_add_event_cb(cb, hide_controls_changed, LV_EVENT_VALUE_CHANGED, NULL);
+    /* Text area */
+    lv_obj_t * text_ta = lv_textarea_create(row_edit);
+    lv_textarea_set_one_line(text_ta, true);
+    lv_obj_set_width(text_ta, BSP_LCD_V_RES - 200);
+    lv_textarea_set_text(text_ta, APP_BREAKING_NEWS_TEXT);
+    
+    /* Save button */
+    lv_obj_t * btn_save = lv_btn_create(row_edit);
+    label = lv_label_create(btn_save);
+    lv_label_set_text_static(label, "SAVE");
+    lv_obj_add_event_cb(btn_save, save_event_cb, LV_EVENT_CLICKED, text_ta);
 
     /* Create player */
+    snprintf(file_path, sizeof(file_path), "%s/%s", BSP_SD_MOUNT_POINT, filename);
     esp_lvgl_simple_player_cfg_t player_cfg = {
-        .file = APP_VIDEO_FILE_PATH,
+        .file = file_path,
         .screen = cont_col,
         .screen_width = BSP_LCD_V_RES,
         .screen_height = (BSP_LCD_H_RES/2),
@@ -159,12 +220,12 @@ static void app_show_ui(void)
     lv_img_set_src(img_breaking_news, &breaking_news);
     lv_obj_align(img_breaking_news, LV_ALIGN_BOTTOM_MID, 0, 0);
     
-    lv_obj_t * label = lv_label_create(img_breaking_news);
-    lv_obj_set_width(label, BSP_LCD_V_RES - 155);
-    lv_label_set_text(label, breaking_news_text);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_16, 0);
-    lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-    lv_obj_align(label, LV_ALIGN_BOTTOM_RIGHT, -40, -25);
+    lbl_breaking_news = lv_label_create(img_breaking_news);
+    lv_obj_set_width(lbl_breaking_news, BSP_LCD_V_RES - 155);
+    lv_label_set_text(lbl_breaking_news, APP_BREAKING_NEWS_TEXT);
+    lv_obj_set_style_text_font(lbl_breaking_news, &lv_font_montserrat_16, 0);
+    lv_label_set_long_mode(lbl_breaking_news, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_align(lbl_breaking_news, LV_ALIGN_BOTTOM_RIGHT, -40, -25);
     
     /* Start playing */
     esp_lvgl_simple_player_play();

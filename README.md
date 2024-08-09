@@ -5,6 +5,12 @@ Play mjpeg wideo from SD card.
 
 <img src="doc/demo.jpg" height="500px">
 
+## Supported boards
+
+Select board in `menuconfig`: Component config → Board Support Package(ESP32-P4) → Display → Select LCD type
+- LCD 1280x800 - ili9881c
+- LCD 7-inch 1024x600 - ek79007
+
 ## Build a flash
 
 ```

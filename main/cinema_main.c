@@ -131,7 +131,7 @@ static void app_show_ui(void)
     
     /* Rows */
     lv_obj_t *cont_col = lv_obj_create(lv_screen_active());
-    lv_obj_set_size(cont_col, BSP_LCD_V_RES, BSP_LCD_H_RES);
+    lv_obj_set_size(cont_col, BSP_LCD_H_RES, BSP_LCD_V_RES);
     lv_obj_set_flex_flow(cont_col, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_style_pad_all(cont_col, 0, 0);
     lv_obj_set_flex_align(cont_col, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -143,7 +143,7 @@ static void app_show_ui(void)
     filename = app_get_video_files(files, sizeof(files));
     
     lv_obj_t *cont_row = lv_obj_create(cont_col);
-    lv_obj_set_size(cont_row, BSP_LCD_V_RES - 20, 80);
+    lv_obj_set_size(cont_row, BSP_LCD_H_RES - 20, 80);
     lv_obj_set_flex_flow(cont_row, LV_FLEX_FLOW_ROW);
     lv_obj_set_style_pad_top(cont_row, 2, 0);
     lv_obj_set_style_pad_bottom(cont_row, 2, 0);
@@ -153,7 +153,7 @@ static void app_show_ui(void)
     
     /* Dropdown files */
     lv_obj_t * dd = lv_dropdown_create(cont_row);
-    lv_obj_set_width(dd, BSP_LCD_V_RES/3);
+    lv_obj_set_width(dd, BSP_LCD_H_RES/3);
     lv_dropdown_set_options(dd, files);
     lv_obj_add_event_cb(dd, file_changed, LV_EVENT_VALUE_CHANGED, NULL);
     lv_dropdown_set_selected(dd, sel_file);
@@ -180,7 +180,7 @@ static void app_show_ui(void)
 
     /* Edit ROW */
     row_edit = lv_obj_create(cont_col);
-    lv_obj_set_size(row_edit, BSP_LCD_V_RES - 20, 80);
+    lv_obj_set_size(row_edit, BSP_LCD_H_RES - 20, 80);
     lv_obj_set_flex_flow(row_edit, LV_FLEX_FLOW_ROW);
     lv_obj_set_style_pad_top(row_edit, 0, 0);
     lv_obj_set_style_pad_bottom(row_edit, 0, 0);
@@ -192,7 +192,7 @@ static void app_show_ui(void)
     /* Text area */
     lv_obj_t * text_ta = lv_textarea_create(row_edit);
     lv_textarea_set_one_line(text_ta, true);
-    lv_obj_set_width(text_ta, BSP_LCD_V_RES - 200);
+    lv_obj_set_width(text_ta, BSP_LCD_H_RES - 200);
     lv_textarea_set_text(text_ta, APP_BREAKING_NEWS_TEXT);
     
     /* Save button */
@@ -206,8 +206,8 @@ static void app_show_ui(void)
     esp_lvgl_simple_player_cfg_t player_cfg = {
         .file = file_path,
         .screen = cont_col,
-        .screen_width = BSP_LCD_V_RES,
-        .screen_height = (BSP_LCD_H_RES/2),
+        .screen_width = BSP_LCD_H_RES,
+        .screen_height = (BSP_LCD_V_RES/2),
         .buff_size = 540*960,
         .flags = {
             .auto_height = true,
@@ -221,7 +221,7 @@ static void app_show_ui(void)
     lv_obj_align(img_breaking_news, LV_ALIGN_BOTTOM_MID, 0, 0);
     
     lbl_breaking_news = lv_label_create(img_breaking_news);
-    lv_obj_set_width(lbl_breaking_news, BSP_LCD_V_RES - 155);
+    lv_obj_set_width(lbl_breaking_news, BSP_LCD_H_RES - 155);
     lv_label_set_text(lbl_breaking_news, APP_BREAKING_NEWS_TEXT);
     lv_obj_set_style_text_font(lbl_breaking_news, &lv_font_montserrat_16, 0);
     lv_label_set_long_mode(lbl_breaking_news, LV_LABEL_LONG_SCROLL_CIRCULAR);

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: CC0-1.0
  */
 
+#include <string.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include "esp_log.h"
@@ -248,7 +249,11 @@ void app_main(void)
         },
         .buffer_size = BSP_LCD_DRAW_BUFF_SIZE,
         .flags = {
+#if CONFIG_BSP_LCD_COLOR_FORMAT_RGB888
+            .buff_dma = false,
+#else
             .buff_dma = true,
+#endif
         }
     };
     lv_disp_t *display = bsp_display_start_with_config(&disp_cfg);

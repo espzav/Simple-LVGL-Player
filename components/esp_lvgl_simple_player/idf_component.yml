@@ -5,9 +5,5 @@ targets:
   - esp32p4
 
 dependencies:
-  idf: ">=5"
-  lvgl/lvgl: "^9"
-  esp_lvgl_port:
-    version: "^2"
-    public: true
+  esp_lvgl_port: "*"
 
